@@ -13,6 +13,7 @@ class ConfigFile
 	TString m_output_dir = "";
 	TString m_outfilename = "";	
 	TString m_infilename = "";
+        TString m_prefix = "";
 
 public:
 	// The following function reads the config file and returns 0 if the all the necessary paramers were specified and returns -1 if not.
@@ -62,6 +63,13 @@ public:
 						std::cout << "Output filename: " << m_outfilename << endl;
 		      		        }
 
+					else if ( skey == "Prefix")
+					{
+						TString sval = ( (TObjString*)(*tokens)[1] )->GetString();
+						m_prefix = sval;
+						std::cout << "Prefix: " << m_prefix << endl;
+		      		        }
+
 					delete tokens;
 
 				}
@@ -94,6 +102,13 @@ public:
 						return -1;
 		      			}
 
+					else if( skey == "Prefix" )
+		      			{
+						std::cerr << "Error: Prefix name not provied! \n";
+						return -1;
+		      			}
+					
+
 				}
 			}
          	}
@@ -119,26 +134,31 @@ public:
 	{
 		return m_outfilename;
         }
+
+        TString return_prefix()
+	{
+		return m_prefix;
+        }
 };
 
 //Class to handle the module geometry input
-class FT_DB
+class MOD_DB
 {
 	//Define DB variables read in by the configuration file
-	TString m_db_ft_dir = "";
-	TString m_db_ft_filename = "";
+	TString m_db_dir = "";
+	TString m_db_filename = "";
 
 public:
 
         // The following function reads the config file and returns 0 if the all the necessary paramers were specified and returns -1 if not.
-        int read_FT_DB( const char* configfilename)
+        int read_MOD_DB( const char* configfilename)
         {
-                ifstream ft_db_filename(configfilename);
+                ifstream db_filename(configfilename);
                 TString currentline;
 
                 std::cout <<'\n'<<"--- Reading configuration file: " << configfilename << " --- \n";
 
-                while( currentline.ReadLine(ft_db_filename) )
+                while( currentline.ReadLine(db_filename) )
                 {
                         if( !currentline.BeginsWith("#") )
                         {
@@ -152,15 +172,15 @@ public:
                                         if ( skey == "DB_dir")
                                         {
                                                 TString sval = ( (TObjString*)(*tokens)[1] )->GetString();
-                                                m_db_ft_dir = sval;
-                                                std::cout << "Database directory: " << m_db_ft_dir << endl;
+                                                m_db_dir = sval;
+                                                std::cout << "Database directory: " << m_db_dir << endl;
                                         }
 
-                                        else if ( skey == "DB_FT_filename")
+                                        else if ( skey == "DB_filename")
                                         {
                                                 TString sval = ( (TObjString*)(*tokens)[1] )->GetString();
-                                                m_db_ft_filename = sval;
-                                                std::cout << "FT database filename: " << m_db_ft_filename << endl;
+                                                m_db_filename = sval;
+                                                std::cout << "FT database filename: " << m_db_filename << endl;
                                         }
 
                                         delete tokens;
@@ -177,7 +197,7 @@ public:
                                         }
 
 
-                                        else if( skey == "DB_FT_filename" )
+                                        else if( skey == "DB_filename" )
                                         {
                                                 std::cerr << "Error: FT database not provied! \n";
                                                 return -1;
@@ -191,12 +211,12 @@ public:
 
         TString return_DB_dir()
         {
-                return m_db_ft_dir;
+                return m_db_dir;
         }
 
-        TString return_FT_DB_filename()
+        TString return_DB_filename()
         {
-                return m_db_ft_filename;
+                return m_db_filename;
         }
 
 };

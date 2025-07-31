@@ -1,0 +1,29 @@
+#This configuration file holds paths for input/output directories and output file name.
+
+#Set the absolute path to the input directory containing parsed rootfiles
+#input_dir /lustre24/expphy/volatile/halla/sbs/vidura/parsed-rootfiles
+input_dir /lustre24/expphy/volatile/halla/sbs/vidura/gem_elastics
+
+#Set the absolute path to the output directory 
+output_dir /lustre24/expphy/volatile/halla/sbs/vidura/gem_elastics
+
+#Set the input file name
+#input_filename GEP1_LH2_bigbrod_3051_3052_3053_3054_3055_Apr30.root
+#input_filename gem_elastic_15uA.root
+input_filename gem_elastic_4771-4891_22uA.root
+
+#Set the output file name
+output_filename gem_elastic_test.root
+
+#Set the input path for the Database
+DB_dir DB
+
+#Set the FT DB filename
+DB_filename db_sbs.gemFPP.dat
+
+#Set Prefix
+Prefix sbs.gemFPP
+
+
+
+

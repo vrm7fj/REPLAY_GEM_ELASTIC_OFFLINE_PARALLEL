@@ -11,11 +11,19 @@
 #include "TVector3.h"
 #include "TRotation.h"
 #include "hardcode.h"
+#include "read_config.h"
 
-#ifndef ELASTIC_ENGINE_H
-#define ELASTIC_ENGINE_H
+#ifndef MAIN_H
+#define MAIN_H
+
+/**************************************************************
+ *  Read the Database and Initialize Geometries of Modules   *
+ **************************************************************/
 
 //Structor to hold module parameters
+
+extern TString prefix;
+extern TString output_filename;
 
 struct module_para_struct {
 	std::vector<TVector3> module_pos;	
@@ -24,67 +32,59 @@ struct module_para_struct {
 	std::vector<std::array<int, 1>> module_layer;	
 };
 
-Int_t GEM_FT_NMODULE = 0; //initalize the number of GEM modules - will be read from
-std::map<TString, module_para_struct> FT_module_para; //map to hold module parameters and a key
+Int_t GEM_NMODULE = 0; //initalize the number of GEM modules - will be read from
+std::map<TString, module_para_struct> tracker_module_para; //map to hold module parameters and a key
 
-void Init_FT_module_geometry(const char* ft_db_dir, const char* ft_db_filename)
-//std::map<TString, module_para_struct> Init_FT_module_geometry(const char* ft_db_dir, const char* ft_db_filename)
-{       
+void Init_module_geometry(const char* db_dir, const char* db_filename)
+{
 
-	//map to hold module paramters and a key
-	//std::map<TString, module_para_struct> FT_module_para;
-
-	//
-	//Int_t GEM_FT_NMODULE = 0; //initalize the number of GEM modules - will be read from DB
-	/*---------------------------------------------------------------------------------------------------------*/
-        	
-	//ifstream the dat file
- 	TString s_ft_db_infile = Form("%s/%s", ft_db_dir, ft_db_filename); //Dont need .Data() - already const char*
-	ifstream ft_db_infile(s_ft_db_infile);
+        tracker_module_para.clear();
+	
+	// ifstream the .da file from DB
+  	TString s_db_infile = Form("%s/%s", db_dir, db_filename); //Dont need .Data() - already const char*
+	ifstream db_infile(s_db_infile);
 	TString currentline;
 
-	if (!ft_db_infile.is_open()) {
-		std::cerr << "Error: Could not open db_sbs.gemFT.dat!!" << std::endl;
+	if (!db_infile.is_open()) {
+		std::cerr << "Error: Could not open DB file!!" << std::endl;
 	}
 
-	//Lets write something to read number of modules from the DB
-	while ( currentline.ReadLine( ft_db_infile ))
+	// This function will calculate the number of gem modules .dat file
+	while ( currentline.ReadLine( db_infile ))
 	{
 		if (!currentline.BeginsWith("#"))
 		{
-                	TString sbs_gemFT_modules = "sbs.gemFT.modules";	
+                	TString sbs_gem_modules = prefix + ".modules";	
 			TObjArray *ft_tokens = currentline.Tokenize(" ");
 		    	int nft_tokens = ft_tokens->GetEntries();
 			//std::cout << "ft_tokens: " << nft_tokens << std::endl;
 			TString sval_0 = ( (TObjString*)(*ft_tokens)[0] )->GetString();
 
-				if ( sval_0 == sbs_gemFT_modules) {
-                                	GEM_FT_NMODULE = nft_tokens - 2; // first word followed by a "=" sign
+				if ( sval_0 == sbs_gem_modules) {
+                                	GEM_NMODULE = nft_tokens - 2; // first word followed by a "=" sign
 				}
 		delete ft_tokens; 
 		}
 	}
 
-	ft_db_infile.clear(); 
-	ft_db_infile.seekg(0, std::ios::beg); //reset currentline to zero!
-
-	//std::cout << "N_MODULES: " << GEM_FT_NMODULE << std::endl;
+	db_infile.clear(); 
+	db_infile.seekg(0, std::ios::beg); //reset currentline to zero
         
 	//Define an array of module wise parameters for the front tracker in the format sbs.gemFT.mX.YYYYY
-        std::vector<TString> gemFT_module_size;
-        std::vector<TString> gemFT_module_position;
-        std::vector<TString> gemFT_module_angle;
-        std::vector<TString> gemFT_module_layer;
+        std::vector<TString> gem_module_size;
+        std::vector<TString> gem_module_position;
+        std::vector<TString> gem_module_angle;
+        std::vector<TString> gem_module_layer;
 
-        for (Int_t module_ = 0; module_ < GEM_FT_NMODULE; module_++) {
-        	gemFT_module_size.push_back(Form("sbs.gemFT.m%d.size", module_));
-                gemFT_module_position.push_back(Form("sbs.gemFT.m%d.position", module_));
-                gemFT_module_angle.push_back(Form("sbs.gemFT.m%d.angle", module_));
-                gemFT_module_layer.push_back(Form("sbs.gemFT.m%d.layer", module_));
+        for (Int_t module_ = 0; module_ < GEM_NMODULE; module_++) {
+        	gem_module_size.push_back(Form(prefix + ".m%d.size", module_));
+                gem_module_position.push_back(Form(prefix + ".m%d.position", module_));
+                gem_module_angle.push_back(Form(prefix + ".m%d.angle", module_));
+                gem_module_layer.push_back(Form(prefix + ".m%d.layer", module_));
         }
 
 	//Now we have to read the db file. 
-	while ( currentline.ReadLine( ft_db_infile ))
+	while ( currentline.ReadLine( db_infile ))
 	{
 		TObjArray *ft_tokens = currentline.Tokenize(" ");
 		Int_t nft_tokens = ft_tokens->GetEntries();
@@ -94,34 +94,34 @@ void Init_FT_module_geometry(const char* ft_db_dir, const char* ft_db_filename)
 
 			TString sval_0 = ( (TObjString*)(*ft_tokens)[0] )->GetString();
 
-                        for (Int_t module_ = 0; module_ < GEM_FT_NMODULE; module_ ++) {
+                        for (Int_t module_ = 0; module_ < GEM_NMODULE; module_ ++) {
 
 				TString mod_key = Form("m%02d", module_);
 
-				if ( sval_0 == gemFT_module_position[module_]) {
+				if ( sval_0 == gem_module_position[module_]) {
 
 					double val_1 = ( (TObjString*)(*ft_tokens)[2] )->GetString().Atof(); //There is a reason for repeating this
 					double val_2 = ( (TObjString*)(*ft_tokens)[3] )->GetString().Atof();
 					double val_3 = ( (TObjString*)(*ft_tokens)[4] )->GetString().Atof();
-                                        FT_module_para[mod_key].module_pos.emplace_back(val_1, val_2, val_3);
+                                        tracker_module_para[mod_key].module_pos.emplace_back(val_1, val_2, val_3);
 
-				} else if ( sval_0 == gemFT_module_size[module_]) {
+				} else if ( sval_0 == gem_module_size[module_]) {
 	
 					double val_1 = ( (TObjString*)(*ft_tokens)[2] )->GetString().Atof();
 					double val_2 = ( (TObjString*)(*ft_tokens)[3] )->GetString().Atof();
 					double val_3 = ( (TObjString*)(*ft_tokens)[4] )->GetString().Atof();
-                                        FT_module_para[mod_key].module_size.emplace_back(val_1, val_2, val_3);
+                                        tracker_module_para[mod_key].module_size.emplace_back(val_1, val_2, val_3);
 
-				} else if ( sval_0 == gemFT_module_angle[module_]) {
+				} else if ( sval_0 == gem_module_angle[module_]) {
 	
 					double val_1 = ( (TObjString*)(*ft_tokens)[2] )->GetString().Atof();
 					double val_2 = ( (TObjString*)(*ft_tokens)[3] )->GetString().Atof();
 					double val_3 = ( (TObjString*)(*ft_tokens)[4] )->GetString().Atof();
-                                        FT_module_para[mod_key].module_angle.emplace_back(val_1, val_2, val_3);
+                                        tracker_module_para[mod_key].module_angle.emplace_back(val_1, val_2, val_3);
 
-				} else if ( sval_0 == gemFT_module_layer[module_]) {
+				} else if ( sval_0 == gem_module_layer[module_]) {
 					double val_1 = ( (TObjString*)(*ft_tokens)[2] )->GetString().Atof();
-                                        FT_module_para[mod_key].module_layer.push_back({static_cast<int>(val_1)});
+                                        tracker_module_para[mod_key].module_layer.push_back({static_cast<int>(val_1)});
 
 				}
 			}
@@ -130,11 +130,11 @@ void Init_FT_module_geometry(const char* ft_db_dir, const char* ft_db_filename)
 		}
 	}
 
-	ft_db_infile.close();
+	db_infile.close();
 
-	std::cout << "\n----------FT Module Parameters----------\n";
+	std::cout << "\n----------GEM Module Parameters----------\n";
 
- 	for (const auto& entry : FT_module_para) {
+ 	for (const auto& entry : tracker_module_para) {
 	
 		const TString& module_key = entry.first;
 		const module_para_struct& module_para = entry.second;
@@ -168,23 +168,28 @@ void Init_FT_module_geometry(const char* ft_db_dir, const char* ft_db_filename)
     	}
 }
 
-/*-------------------------------------------------------------------------------------------------------------------------*/
-Double_t 	FT_HIT_LAYER[MAXHIT];
-Int_t           N_FT_HIT_LAYER[MAXHIT];
+/**************************************************************
+ *           Initialize the ROOT Tree and Branches            *
+ **************************************************************/
 
-Double_t        FT_TRACK_NHITS[MAXHIT];			 
-Double_t 	FT_HIT_MODULE[MAXHIT];
-Double_t        N_FT_HIT_MODULE[MAXHIT];
-Double_t 	FT_HIT_XLOCAL[MAXHIT];
-Double_t	FT_HIT_YLOCAL[MAXHIT];
-Double_t        FT_HIT_ZGLOBAL[MAXHIT];
+// Prefix is defined in the main script. Let's extern it here
 
-Double_t        FT_TRACK_X[MAXHIT];
-Double_t        N_FT_TRACK_X[MAXHIT];
-Double_t        FT_TRACK_XP[MAXHIT];
-Double_t        FT_TRACK_Y[MAXHIT];
-Double_t        N_FT_TRACK_Y[MAXHIT];
-Double_t        FT_TRACK_YP[MAXHIT];
+Double_t 	TKR_HIT_LAYER[MAXHIT];
+Int_t           N_TKR_HIT_LAYER[MAXHIT];
+
+Double_t        TKR_TRACK_NHITS[MAXHIT];			 
+Double_t 	TKR_HIT_MODULE[MAXHIT];
+Double_t        N_TKR_HIT_MODULE[MAXHIT];
+Double_t 	TKR_HIT_XLOCAL[MAXHIT];
+Double_t	TKR_HIT_YLOCAL[MAXHIT];
+Double_t        TKR_HIT_ZGLOBAL[MAXHIT];
+
+Double_t        TKR_TRACK_X[MAXHIT];
+Double_t        N_TKR_TRACK_X[MAXHIT];
+Double_t        TKR_TRACK_XP[MAXHIT];
+Double_t        TKR_TRACK_Y[MAXHIT];
+Double_t        N_TKR_TRACK_Y[MAXHIT];
+Double_t        TKR_TRACK_YP[MAXHIT];
 
 Long64_t nentries = 0;
 
@@ -192,54 +197,43 @@ void InitTree(TTree* T)
 {
 	nentries = T->GetEntries();
 
-	T->SetBranchAddress("sbs.gemFT.hit.layer", &FT_HIT_LAYER);
-	T->SetBranchAddress("sbs.gemFT.hit.module", &FT_HIT_MODULE);
-	T->SetBranchAddress("sbs.gemFT.hit.xlocal", &FT_HIT_XLOCAL);
-	T->SetBranchAddress("sbs.gemFT.hit.yglobal", &FT_HIT_YLOCAL);
-	T->SetBranchAddress("sbs.gemFT.hit.zglobal", &FT_HIT_ZGLOBAL);
-	T->SetBranchAddress("sbs.gemFT.track.nhits", &FT_TRACK_NHITS);
-	T->SetBranchAddress("Ndata.sbs.gemFT.hit.layer", &N_FT_HIT_LAYER);
-	T->SetBranchAddress("Ndata.sbs.gemFT.hit.module", &N_FT_HIT_MODULE);
+	std::cout<<  " " << std::endl;
+	std::cout<< "PREFIX IS: " << prefix << std::endl;
+
+	T->SetBranchAddress(prefix + ".hit.layer", &TKR_HIT_LAYER);
+	T->SetBranchAddress((prefix + ".hit.module"), &TKR_HIT_MODULE);
+	T->SetBranchAddress((prefix + ".hit.xlocal"), &TKR_HIT_XLOCAL);
+	T->SetBranchAddress((prefix + ".hit.yglobal"), &TKR_HIT_YLOCAL);
+	T->SetBranchAddress((prefix + ".hit.zglobal"), &TKR_HIT_ZGLOBAL);
+	T->SetBranchAddress((prefix + ".track.nhits"), &TKR_TRACK_NHITS);
+	T->SetBranchAddress(("Ndata." + prefix + ".hit.layer"), &N_TKR_HIT_LAYER);
+	T->SetBranchAddress(("Ndata." + prefix + ".hit.module"), &N_TKR_HIT_MODULE);
 	
-	T->SetBranchAddress("sbs.gemFT.track.x", &FT_TRACK_X); 
-	T->SetBranchAddress("Ndata.sbs.gemFT.track.x", &N_FT_TRACK_X);
-	T->SetBranchAddress("sbs.gemFT.track.y", &FT_TRACK_Y);
-	T->SetBranchAddress("Ndata.sbs.gemFT.track.y", &N_FT_TRACK_Y);
-	T->SetBranchAddress("sbs.gemFT.track.xp", &FT_TRACK_XP);
-	T->SetBranchAddress("sbs.gemFT.track.yp", &FT_TRACK_YP);
+	T->SetBranchAddress((prefix + ".track.x"), &TKR_TRACK_X); 
+	T->SetBranchAddress(("Ndata." + prefix + ".track.x"), &N_TKR_TRACK_X);
+	T->SetBranchAddress((prefix + ".track.y"), &TKR_TRACK_Y);
+	T->SetBranchAddress(("Ndata." + prefix + ".track.y"), &N_TKR_TRACK_Y);
+	T->SetBranchAddress((prefix + ".track.xp"), &TKR_TRACK_XP);
+	T->SetBranchAddress((prefix + ".track.yp"), &TKR_TRACK_YP);
 
 }
-/*--------------------------------------------------------------------------------------------------------------------------*/
-// Test Ground
 
-// void Test(TTree* T)
-// { 
-// 	InitTree(T);
+/**************************************************************
+ *   Switch to a layer-based map from the module-based map    *
+ **************************************************************/
 
-// 	for(Long64_t i = 0; i < nentries; ++i)
-// 	{
-// 		T->GetEntry(i);
-// 		if (MODULE[i] == 0){
-// 			std::cout << "Entry: " << i << "	xglobal: " << XGLOBAL[i] << std::endl;
-// 		}
-// 	}
-// }
-
-/*---------------------------------------------------------------------------------------------------------------------------*/
-
-//It should be better switch to a layer based map from the module based map
 //Structor to hold modules by layer
-struct FT_layer_struct {
+struct TKR_layer_struct {
         std::vector<Int_t> module_id;
  	std::vector<TVector3> module_pos;	
  	std::vector<TVector3> module_size;	
  	std::vector<TVector3> module_angle;	
  };
 
-std::map<Int_t, FT_layer_struct> FT_layer_map;
+std::map<Int_t, TKR_layer_struct> TKR_layer_map;
 
 //Initialize number of layers for future use
-Int_t FT_NLAYER = 0;
+Int_t TKR_NLAYER = 0;
 
  //switch to layer map
 void Init_layer_map(const std::map<TString, module_para_struct> &params)
@@ -250,7 +244,7 @@ for (const auto&  entry : params)
    const module_para_struct& module_para = entry.second;
    Int_t layer_id = module_para.module_layer[0][0];
    
-   FT_layer_struct& layer = FT_layer_map[layer_id];
+   TKR_layer_struct& layer = TKR_layer_map[layer_id];
 
    layer.module_id.push_back(std::stoi(module_key.Data()+1)); // m00 -> 0
    layer.module_pos.insert(layer.module_pos.end(), module_para.module_pos.begin(), module_para.module_pos.end());
@@ -258,11 +252,11 @@ for (const auto&  entry : params)
    layer.module_angle.insert(layer.module_angle.end(), module_para.module_angle.begin(), module_para.module_angle.end());
   }
 
- std::cout << "-------------------- FT Layer Map ---------------------" << "\n";
- for (const auto& entry : FT_layer_map)
+ std::cout << "-------------------- Tracker Layer Map ---------------------" << "\n";
+ for (const auto& entry : TKR_layer_map)
    {
      Int_t layer_id = entry.first;
-     const FT_layer_struct& layer_para = entry.second;
+     const TKR_layer_struct& layer_para = entry.second;
 
      std::cout << "Layer: " << layer_id << ":\n";
 
@@ -277,7 +271,7 @@ for (const auto&  entry : params)
    }
  std::cout << "-------------------------------------------------------" << std::endl;
 
- FT_NLAYER = FT_layer_map.size(); //Usefull for later
+ TKR_NLAYER = TKR_layer_map.size(); //Usefull for later
 }
 
 // Lets create a vector that store 1 if a layer is a composite and 0 if not
@@ -287,9 +281,9 @@ for (const auto&  entry : params)
 
 // void Is_layer_composite (){
 
-//   // is_layer_composite.resize(FT_NLAYER);
+//   // is_layer_composite.resize(TKR_NLAYER);
   
-//   for (const auto& [map_key, map_data]: FT_layer_map) {
+//   for (const auto& [map_key, map_data]: TKR_layer_map) {
 //     if ( map_data.module_id.size() > 1 ) {
 //       is_layer_composite.push_back(1);
 //       N_module_in_layer.push_back(map_data.module_id.size());
@@ -302,11 +296,18 @@ for (const auto&  entry : params)
 //     }
 //   }
 // }
- 
+
+/**************************************************************
+ *               Initialize grid bins here                    *
+ **************************************************************/
+
+/* Since tracking is already done and each entry in the root file contains only the hits that were used to
+   construct the track it is not absolutely necessary to calculate the grid bin widths. But this also calculate
+   positions of the edges of each layer which are usefull for Drawing histograms                             */
 
 std::map<int, double> fZavgLayer; // Average z position of the layer. We'll need it when we project the track
 double fZminLayer, fZmaxLayer;
-// "Grid bins" for fast track-finding algorithm: define limits of layer active area
+// define limits of layer active area
 std::map<int, double> fXmin_layer, fXmax_layer, fYmin_layer, fYmax_layer;
 //double fGridBinWidthX, fGridBinWidthY; // Will define these in hardcode.h
 double fGridEdgeToleranceX, fGridEdgeToleranceY;
@@ -315,7 +316,7 @@ std::map<int, double> fGridXmin_layer, fGridYmin_layer, fGridXmax_layer, fGridYm
 
 
 
-void Init_Grid_Bins(const std::map<Int_t, FT_layer_struct>& params)
+void Init_Grid_Bins(const std::map<Int_t, TKR_layer_struct>& params)
 {
   // Clear all the maps 
   fZavgLayer.clear();
@@ -335,7 +336,7 @@ void Init_Grid_Bins(const std::map<Int_t, FT_layer_struct>& params)
   for (const auto& entry : params)
     {
       const Int_t& layer_key = entry.first;
-      const FT_layer_struct& layer_para = entry.second;
+      const TKR_layer_struct& layer_para = entry.second;
 
        //Initiate grid active area for this layer
        double xgmin_all = 1.e12, ygmin_all = 1.e12, xgmax_all = -1.e12, ygmax_all = -1.e12;
@@ -468,88 +469,91 @@ void Init_Grid_Bins(const std::map<Int_t, FT_layer_struct>& params)
 }
 
 
-// // structure to hold hit informations
-// struct hit_list_struct {
-//   std::vector<Int_t> hit_layer;
-//   std::vector<Int_t> hit_status;
-//   std::vector<TVector2> hit_position;
-// };
+// // // structure to hold hit informations
+// // struct hit_list_struct {
+// //   std::vector<Int_t> hit_layer;
+// //   std::vector<Int_t> hit_status;
+// //   std::vector<TVector2> hit_position;
+// // };
 
-// // map to hold hit information corresponding to each hit index
-// std::map<Int_t, hit_list_struct> hit_list;
+// // // map to hold hit information corresponding to each hit index
+// // std::map<Int_t, hit_list_struct> hit_list;
 
-// // Temp vectors for filling the hit_list map
-// std::vector<Int_t> layers_with_hits;
-// std::vector<TVector2> hit_pos_on_layer;
+// // // Temp vectors for filling the hit_list map
+// // std::vector<Int_t> layers_with_hits;
+// // std::vector<TVector2> hit_pos_on_layer;
 
-// void Init_hit_list( TTree* T){
+// // void Init_hit_list( TTree* T){
 
-//   InitTree(T);
+// //   InitTree(T);
 
-//   //std::cout << FT_NLAYER << std::endl;
+// //   //std::cout << TKR_NLAYER << std::endl;
   
-//   for (Int_t T_index = 0; T_index < nentries; T_index++) {
+// //   for (Int_t T_index = 0; T_index < nentries; T_index++) {
     
-//     T->GetEntry(T_index);
+// //     T->GetEntry(T_index);
 
-//     hit_list_struct current_hit;
+// //     hit_list_struct current_hit;
 
-//     Int_t n_hits_on_track = FT_TRACK_NHITS[0]; // Number of hits we have on this track
+// //     Int_t n_hits_on_track = TKR_TRACK_NHITS[0]; // Number of hits we have on this track
 
-//     layers_with_hits.clear();
-//     hit_pos_on_layer.clear();
+// //     layers_with_hits.clear();
+// //     hit_pos_on_layer.clear();
 
-//     for (Int_t hit_index = 0; hit_index < n_hits_on_track; hit_index++){
-//       layers_with_hits.push_back(FT_HIT_LAYER[hit_index]); // These layers have hits
+// //     for (Int_t hit_index = 0; hit_index < n_hits_on_track; hit_index++){
+// //       layers_with_hits.push_back(TKR_HIT_LAYER[hit_index]); // These layers have hits
 
-//             Double_t hit_x_pos = FT_HIT_XLOCAL[hit_index];
-//             Double_t hit_y_pos = FT_HIT_YLOCAL[hit_index];
+// //             Double_t hit_x_pos = TKR_HIT_XLOCAL[hit_index];
+// //             Double_t hit_y_pos = TKR_HIT_YLOCAL[hit_index];
 
-// 	    hit_pos_on_layer.push_back(TVector2(hit_x_pos, hit_y_pos));
-//     }
+// // 	    hit_pos_on_layer.push_back(TVector2(hit_x_pos, hit_y_pos));
+// //     }
 
-//     // //Debug Print
-//     // for ( Int_t i = 0 ; i < hit_pos_on_layer.size(); i++) 
-//     // }
+// //     // //Debug Print
+// //     // for ( Int_t i = 0 ; i < hit_pos_on_layer.size(); i++) 
+// //     // }
 
-//     // Fill the hit_list map now
-//     // Loop over all the layers and update all layers with hits and mark the layers without hits
-//     //std::cout << " How about here? " << std::endl;
-//     for ( Int_t ilayer = 0; ilayer < FT_NLAYER; ilayer++) {
+// //     // Fill the hit_list map now
+// //     // Loop over all the layers and update all layers with hits and mark the layers without hits
+// //     //std::cout << " How about here? " << std::endl;
+// //     for ( Int_t ilayer = 0; ilayer < TKR_NLAYER; ilayer++) {
       
-//       //Check if this layer exists in layers_with_hits
-//       auto found_layer = std::find(layers_with_hits.begin(), layers_with_hits.end(), ilayer);
+// //       //Check if this layer exists in layers_with_hits
+// //       auto found_layer = std::find(layers_with_hits.begin(), layers_with_hits.end(), ilayer);
 
-//       // std::cout << *found_layer << std::endl;
-//       // Found hit on this layer
-//       if ( found_layer != layers_with_hits.end() ) {
-// 	Int_t hit_index = std::distance(layers_with_hits.begin(), found_layer); // Get the corresponding index
-// 	current_hit.hit_layer.push_back(ilayer);
-// 	current_hit.hit_status.push_back(1);
-// 	current_hit.hit_position.push_back(hit_pos_on_layer[hit_index]); //index is what needed here.  
-//         } else {
-// 	current_hit.hit_layer.push_back(ilayer);
-// 	current_hit.hit_status.push_back(-1);
-// 	current_hit.hit_position.push_back(TVector2(-1,-1));
-// 	}
+// //       // std::cout << *found_layer << std::endl;
+// //       // Found hit on this layer
+// //       if ( found_layer != layers_with_hits.end() ) {
+// // 	Int_t hit_index = std::distance(layers_with_hits.begin(), found_layer); // Get the corresponding index
+// // 	current_hit.hit_layer.push_back(ilayer);
+// // 	current_hit.hit_status.push_back(1);
+// // 	current_hit.hit_position.push_back(hit_pos_on_layer[hit_index]); //index is what needed here.  
+// //         } else {
+// // 	current_hit.hit_layer.push_back(ilayer);
+// // 	current_hit.hit_status.push_back(-1);
+// // 	current_hit.hit_position.push_back(TVector2(-1,-1));
+// // 	}
      
-//     }
+// //     }
 
-//     // Update the map
-//     hit_list[T_index] = current_hit;      
-//   }
-//   // // Print the map for debug purposes
-//   // for (const auto& [hit_idx, hit_data]: hit_list){
-//   //   std::cout << "  Track index: " << hit_idx << "\n";
-//   //   for ( Int_t idx = 0 ; idx < FT_NLAYER; idx++) {
-//   //     std::cout << "    Hit layer: " << hit_data.hit_layer[idx]<< std::setw(10) << " | "  
-//   // 		<< "    Hit status: " << std::setw(5) << hit_data.hit_status[idx] << std::setw(10) << " | " 
-//   //     << "    Hit positions: (" << hit_data.hit_position[idx].X() << ", " << hit_data.hit_position[idx].Y() << ") " << std::endl;  
-//   //   }
-//   // }
-// }
+// //     // Update the map
+// //     hit_list[T_index] = current_hit;      
+// //   }
+// //   // // Print the map for debug purposes
+// //   // for (const auto& [hit_idx, hit_data]: hit_list){
+// //   //   std::cout << "  Track index: " << hit_idx << "\n";
+// //   //   for ( Int_t idx = 0 ; idx < TKR_NLAYER; idx++) {
+// //   //     std::cout << "    Hit layer: " << hit_data.hit_layer[idx]<< std::setw(10) << " | "  
+// //   // 		<< "    Hit status: " << std::setw(5) << hit_data.hit_status[idx] << std::setw(10) << " | " 
+// //   //     << "    Hit positions: (" << hit_data.hit_position[idx].X() << ", " << hit_data.hit_position[idx].Y() << ") " << std::endl;  
+// //   //   }
+// //   // }
+// // }
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+/**************************************************************
+ *   Initialize the map containing all the hit information    *
+ **************************************************************/
 
 // structure to hold hit informations
 struct hit_list_struct {
@@ -570,7 +574,7 @@ void Init_hit_list( TTree* T){
 
   InitTree(T);
 
-  //std::cout << FT_NLAYER << std::endl;
+  //std::cout << TKR_NLAYER << std::endl;
   
   for (Int_t T_index = 0; T_index < nentries; T_index++) {
     
@@ -578,7 +582,7 @@ void Init_hit_list( TTree* T){
 
     hit_list_struct current_hit;
 
-    Int_t n_hits_on_track = FT_TRACK_NHITS[0]; // Number of hits we have on this track
+    Int_t n_hits_on_track = TKR_TRACK_NHITS[0]; // Number of hits we have on this track
 
     layers_with_hits.clear();
     modules_with_hits.clear();
@@ -586,16 +590,16 @@ void Init_hit_list( TTree* T){
 
     for (Int_t hit_index = 0; hit_index < n_hits_on_track; hit_index++){
 
-      Int_t hit_layer = FT_HIT_LAYER[hit_index];
-      Int_t hit_module = FT_HIT_MODULE[hit_index];
+      Int_t hit_layer = TKR_HIT_LAYER[hit_index];
+      Int_t hit_module = TKR_HIT_MODULE[hit_index];
       
       layers_with_hits.push_back(hit_layer); // These layers have hits
       modules_with_hits.push_back(hit_module);
 
-      auto layer_it = FT_layer_map.find(hit_layer);
+      auto layer_it = TKR_layer_map.find(hit_layer);
 
-      if ( layer_it == FT_layer_map.end()) {
-	std::cerr << " Layer " << hit_layer << " not found in FT_layer_map [Error in Init_hit_list] " << std::endl;
+      if ( layer_it == TKR_layer_map.end()) {
+	std::cerr << " Layer " << hit_layer << " not found in TKR_layer_map [Error in Init_hit_list] " << std::endl;
 	continue;
       }
       
@@ -614,8 +618,8 @@ void Init_hit_list( TTree* T){
 	    Double_t x_shift = layer_para.module_pos[distance_index].X();
 	    Double_t y_shift = layer_para.module_pos[distance_index].Y();
 	      
-            Double_t hit_x_pos = FT_HIT_XLOCAL[hit_index] + x_shift;
-            Double_t hit_y_pos = FT_HIT_YLOCAL[hit_index] + y_shift;
+            Double_t hit_x_pos = TKR_HIT_XLOCAL[hit_index] + x_shift;
+            Double_t hit_y_pos = TKR_HIT_YLOCAL[hit_index] + y_shift;
 
 	    hit_pos_on_layer.push_back(TVector2(hit_x_pos, hit_y_pos));
 	  } else {
@@ -623,8 +627,8 @@ void Init_hit_list( TTree* T){
 	  }
 	} else {
 
-      	    Double_t hit_x_pos = FT_HIT_XLOCAL[hit_index];
-            Double_t hit_y_pos = FT_HIT_YLOCAL[hit_index];
+      	    Double_t hit_x_pos = TKR_HIT_XLOCAL[hit_index];
+            Double_t hit_y_pos = TKR_HIT_YLOCAL[hit_index];
 
 	    hit_pos_on_layer.push_back(TVector2(hit_x_pos, hit_y_pos));
 	}
@@ -639,7 +643,7 @@ void Init_hit_list( TTree* T){
     // Fill the hit_list map now
     // Loop over all the layers and update all layers with hits and mark the layers without hits
     //std::cout << " How about here? " << std::endl;
-    for ( Int_t ilayer = 0; ilayer < FT_NLAYER; ilayer++) {
+    for ( Int_t ilayer = 0; ilayer < TKR_NLAYER; ilayer++) {
       
       //Check if this layer exists in layers_with_hits
       auto found_layer = std::find(layers_with_hits.begin(), layers_with_hits.end(), ilayer);
@@ -665,7 +669,7 @@ void Init_hit_list( TTree* T){
   // // Print the map for debug purposes
   // for (const auto& [hit_idx, hit_data]: hit_list){
   //   std::cout << "  Track index: " << hit_idx << "\n";
-  //   for ( Int_t idx = 0 ; idx < FT_NLAYER; idx++) {
+  //   for ( Int_t idx = 0 ; idx < TKR_NLAYER; idx++) {
   //     std::cout << "    Hit layer: " << hit_data.hit_layer[idx]<< std::setw(10) << " | "  
   // 		<< "    Hit status: " << std::setw(5) << hit_data.hit_status[idx] << std::setw(10) << " | " 
   //     << "    Hit positions: (" << hit_data.hit_position[idx].X() << ", " << hit_data.hit_position[idx].Y() << ") " << std::endl;  
@@ -674,63 +678,66 @@ void Init_hit_list( TTree* T){
 }
 
 
-  ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-// std::vector<Int_t> mod_on_track;
+// // std::vector<Int_t> mod_on_track;
 
-// void hitpostest(TTree* T) {
+// // void hitpostest(TTree* T) {
 
-//     InitTree(T);
+// //     InitTree(T);
 
-//     for ( Int_t T_index = 0; T_index < nentries; T_index++) {
+// //     for ( Int_t T_index = 0; T_index < nentries; T_index++) {
 
-//       T->GetEntry(T_index);
+// //       T->GetEntry(T_index);
 
-//       mod_on_track.clear();
+// //       mod_on_track.clear();
 
-//       Int_t n_hits_on_track = FT_TRACK_NHITS[0]; // Number of hits we have on this track
+// //       Int_t n_hits_on_track = TKR_TRACK_NHITS[0]; // Number of hits we have on this track
 
-//       for ( Int_t hit_index = 0; hit_index < n_hits_on_track; hit_index++ ) {
+// //       for ( Int_t hit_index = 0; hit_index < n_hits_on_track; hit_index++ ) {
 
-// 	mod_on_track.push_back(FT_HIT_MODULE[hit_index]);
+// // 	mod_on_track.push_back(TKR_HIT_MODULE[hit_index]);
 
-// 	//Lets check if this hit is on a composite module
-//         for (const auto& [layer_key, layer_para] : FT_layer_map ) {
-// 	  const std::vector<Int_t>& ids = layer_para.module_id;
+// // 	//Lets check if this hit is on a composite module
+// //         for (const auto& [layer_key, layer_para] : TKR_layer_map ) {
+// // 	  const std::vector<Int_t>& ids = layer_para.module_id;
 
-// 	  // Only search if this is a composite module
-// 	  if ( ids.size() > 1 ) {
+// // 	  // Only search if this is a composite module
+// // 	  if ( ids.size() > 1 ) {
 	    
-// 	    auto it = std::find(ids.begin(), ids.end(), FT_HIT_MODULE[hit_index]);
-// 	    if (it != ids.end() ) {
-// 	      size_t distance_index = std::distance(ids.begin(), it);
+// // 	    auto it = std::find(ids.begin(), ids.end(), TKR_HIT_MODULE[hit_index]);
+// // 	    if (it != ids.end() ) {
+// // 	      size_t distance_index = std::distance(ids.begin(), it);
 
-// 	      std::cout << layer_para.module_id[distance_index] << std::endl;
+// // 	      std::cout << layer_para.module_id[distance_index] << std::endl;
 
 	      
-//             }
-// 	  }
+// //             }
+// // 	  }
 	  
-// 	}
+// // 	}
         	
-//       }
+// //       }
 
-//       std::cout << "\n";
+// //       std::cout << "\n";
 
-//       for (const auto& imod : mod_on_track ) {
-//         printf ( "mod on track: %d \n", imod );
-//       }
-//     }
+// //       for (const auto& imod : mod_on_track ) {
+// //         printf ( "mod on track: %d \n", imod );
+// //       }
+// //     }
 
-//     // std::cout << "\n";
+// //     // std::cout << "\n";
 
-//     // for (const auto& imod : mod_on_track ) {
-//     //     printf ( "mod on track: %d \n", imod );
-//     // }
-// }
-  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// //     // for (const auto& imod : mod_on_track ) {
+// //     //     printf ( "mod on track: %d \n", imod );
+// //     // }
+// // }
+//   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
+/**************************************************************
+ *               Project Tracks to Each Layer                 *
+ **************************************************************/
 
 
 // Structure to hold track data
@@ -757,15 +764,15 @@ void project_track_to_layer(TTree* T) {
     track_list_struct track_list_para;
 
     // Get the positions and angles of the track with respect to the first layer.
-    Double_t track_x = FT_TRACK_X[0];
-    Double_t track_y = FT_TRACK_Y[0];
-    Double_t track_xp = FT_TRACK_XP[0];
-    Double_t track_yp = FT_TRACK_YP[0];
+    Double_t track_x = TKR_TRACK_X[0];
+    Double_t track_y = TKR_TRACK_Y[0];
+    Double_t track_xp = TKR_TRACK_XP[0];
+    Double_t track_yp = TKR_TRACK_YP[0];
 
     // Debug Print
     //std::cout << "( " << track_x << ", " << track_y << ", " << track_xp << ", " << track_yp << " )" << std::endl;
 
-    for ( Int_t ilayer = 0; ilayer < FT_NLAYER; ilayer++ ) {
+    for ( Int_t ilayer = 0; ilayer < TKR_NLAYER; ilayer++ ) {
 
       if ( ilayer == 0 ) {
 	// no need to project track if its layer 0
@@ -793,7 +800,7 @@ void project_track_to_layer(TTree* T) {
     const auto& track_data = track_list.at(hit_idx);
     
     printf("  Track index: %d\n", hit_idx);
-    for (Int_t idx = 0; idx < FT_NLAYER; idx++) {
+    for (Int_t idx = 0; idx < TKR_NLAYER; idx++) {
         printf(" Hit layer: %8d | Hit status: %5d | Hit positions: (%3.8f, %3.8f) | Track positions: (%3.8f, %3.8f)\n",
                hit_data.hit_layer[idx],
                hit_data.hit_status[idx],
@@ -807,7 +814,7 @@ void project_track_to_layer(TTree* T) {
   //   const auto& track_data = track_list.at(hit_idx); // import track list to this
     
   //   std::cout << "  Track index: " << hit_idx << "\n";
-  //   for ( Int_t idx = 0 ; idx < FT_NLAYER; idx++) {
+  //   for ( Int_t idx = 0 ; idx < TKR_NLAYER; idx++) {
   //     std::cout << " Hit layer: " << hit_data.hit_layer[idx]<< std::setw(10) << " | "  
   // 		<< " Hit status: " << std::setw(5) << hit_data.hit_status[idx] << std::setw(10) << " | " 
   // 		<< " Hit positions: (" << hit_data.hit_position[idx].X() << ", " << hit_data.hit_position[idx].Y() << ") " << std::setw(15) << " | " << " Track positions: (" << track_data.track_pos_on_layer[idx].X() << ", " << track_data.track_pos_on_layer[idx].Y() << ") " <<  std::endl;  
@@ -821,21 +828,24 @@ void project_track_to_layer(TTree* T) {
 //   for (Int_t T_index = 0; T_index < nentries; T_index++) {
 //     T->GetEntry(T_index);
 
-//     //std::cout << "Test: " << FT_TRACK_NHITS << std::endl;
-//     std::cout<< "N_FT_HIT_LAYER: " << N_FT_HIT_LAYER[0] << std::endl;
+//     //std::cout << "Test: " << TKR_TRACK_NHITS << std::endl;
+//     std::cout<< "N_TKR_HIT_LAYER: " << N_TKR_HIT_LAYER[0] << std::endl;
 
-//     for (Int_t ii = 0; ii < N_FT_HIT_LAYER[0]; ii++) {
-//       std::cout<< T_index << " FT_HIT_LAYER: " << FT_HIT_LAYER[ii] << std::endl;
-//       Int_t hit_idx = static_cast<Int_t>(FT_HIT_LAYER[ii]);
-//       std::cout<< "Positions: " << FT_HIT_XLOCAL[hit_idx] << std::endl;
+//     for (Int_t ii = 0; ii < N_TKR_HIT_LAYER[0]; ii++) {
+//       std::cout<< T_index << " TKR_HIT_LAYER: " << TKR_HIT_LAYER[ii] << std::endl;
+//       Int_t hit_idx = static_cast<Int_t>(TKR_HIT_LAYER[ii]);
+//       std::cout<< "Positions: " << TKR_HIT_XLOCAL[hit_idx] << std::endl;
 //     }
-//     for (Int_t jj = 0; jj < N_FT_HIT_LAYER[0]; jj++) {
+//     for (Int_t jj = 0; jj < N_TKR_HIT_LAYER[0]; jj++) {
 //       std::cout << "\n";
-//       std::cout << T_index << " FT_TRACK_NHITS: " << FT_TRACK_NHITS[0] << std::endl;
+//       std::cout << T_index << " TKR_TRACK_NHITS: " << TKR_TRACK_NHITS[0] << std::endl;
 //     }
 //   }
 // }
 
+/**************************************************************
+ *         Initialize the Histograms to be filled             *
+ **************************************************************/
     
 // Initialize the histograms
 
@@ -853,19 +863,19 @@ void project_track_to_layer(TTree* T) {
 
 void Init_Histograms() {
   
-   hdidhit_x_layer = new TClonesArray( "TH1D", FT_NLAYER );
-   hdidhit_y_layer = new TClonesArray( "TH1D", FT_NLAYER );
-   hdidhit_xy_layer = new TClonesArray( "TH2D", FT_NLAYER );
+   hdidhit_x_layer = new TClonesArray( "TH1D", TKR_NLAYER );
+   hdidhit_y_layer = new TClonesArray( "TH1D", TKR_NLAYER );
+   hdidhit_xy_layer = new TClonesArray( "TH2D", TKR_NLAYER );
 
-   hshouldhit_x_layer = new TClonesArray( "TH1D", FT_NLAYER );
-   hshouldhit_y_layer = new TClonesArray( "TH1D", FT_NLAYER );
-   hshouldhit_xy_layer = new TClonesArray( "TH2D", FT_NLAYER );
+   hshouldhit_x_layer = new TClonesArray( "TH1D", TKR_NLAYER );
+   hshouldhit_y_layer = new TClonesArray( "TH1D", TKR_NLAYER );
+   hshouldhit_xy_layer = new TClonesArray( "TH2D", TKR_NLAYER );
 
-   hefficiency_x_layer = new TClonesArray( "TH1D", FT_NLAYER );
-   hefficiency_y_layer = new TClonesArray( "TH1D", FT_NLAYER );
-   hefficiency_xy_layer = new TClonesArray( "TH2D", FT_NLAYER );
+   hefficiency_x_layer = new TClonesArray( "TH1D", TKR_NLAYER );
+   hefficiency_y_layer = new TClonesArray( "TH1D", TKR_NLAYER );
+   hefficiency_xy_layer = new TClonesArray( "TH2D", TKR_NLAYER );
    
-   for (Int_t ilayer = 0; ilayer < FT_NLAYER; ilayer++) {
+   for (Int_t ilayer = 0; ilayer < TKR_NLAYER; ilayer++) {
      
       int nbinsx1D = int( round( (fXmax_layer[ilayer]-fXmin_layer[ilayer] + 0.02)/fBinSizeX_efficiency1D ) );
       int nbinsy1D = int( round( (fYmax_layer[ilayer]-fYmin_layer[ilayer] + 0.02)/fBinSizeY_efficiency1D ) );
@@ -889,7 +899,9 @@ void Init_Histograms() {
 }
 
 
-// Fill the histograms
+/**************************************************************
+ *                    Fill the Histograms                     *
+ **************************************************************/
 
 void Fill_Histograms() {
 
@@ -897,7 +909,7 @@ void Fill_Histograms() {
   //   Interate over all the entries in the hit_list and track_list
   //     fill didhit and shouldhit histograms
 
-  for (Int_t ilayer = 0; ilayer < FT_NLAYER; ilayer++) {
+  for (Int_t ilayer = 0; ilayer < TKR_NLAYER; ilayer++) {
 
     // Loop over etries of track_list and extract the corresponding entries from hit_list at the same time
 
@@ -923,12 +935,16 @@ void Fill_Histograms() {
   
 }
 
+/**************************************************************
+ *            Calculate Track-Based Efficiencies              *
+ **************************************************************/
+
 //Calculate Efficiencies
 std::vector<Double_t> layer_elastic_efficiency;
 
 void CalcEfficiency() {
 
-  for (Int_t ilayer = 0; ilayer < FT_NLAYER; ilayer++) {
+  for (Int_t ilayer = 0; ilayer < TKR_NLAYER; ilayer++) {
     ( (TH1D*) (*hefficiency_x_layer)[ilayer] )->Sumw2();
     ( (TH1D*) (*hefficiency_x_layer)[ilayer] )->Divide( ( (TH1D*) (*hdidhit_x_layer)[ilayer] ), ( (TH1D*) (*hshouldhit_x_layer)[ilayer] ), 1.0, 1.0, "B" );
     ( (TH1D*) (*hefficiency_y_layer)[ilayer] )->Sumw2();
@@ -946,11 +962,15 @@ void CalcEfficiency() {
   }
 }
 
+/**************************************************************
+ *                   Print Histograms to PDF                  *
+ **************************************************************/
+
 // Let's Draw the histrograms shall we
 
 void Draw_Histograms() {
-  TString outpdfname = "GEM_elastic_offline.pdf";
-  Int_t nlayer = FT_NLAYER;
+  TString outpdfname = output_filename;
+  Int_t nlayer = TKR_NLAYER;
 
   //gStyle->SetOpsStat(0);
   TCanvas* c = new TCanvas("c", "canvas_for_plots", 900, 900);

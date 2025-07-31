@@ -1,0 +1,166 @@
+## DB for GEp front tracker. Two XZ layers in front, followed by four UV layers and two XY layers.
+# Layer 0: UVaXY (L8)
+# Layer 1: UVaXY (L9)
+# Layer 2: UVaXY (L10)
+# Layer 3: UVaXY (L11)
+# Layer 4: UVaXY (L12)
+# Layer 5: UVaXY (L13)
+# Layer 6: UVaXY (L14)
+# Layer 7: UVaXY (L15)
+
+## Define ALL the independent GEM modules used in the tracker.
+sbs.gemFPP.modules = m0 m1 m2 m3   m4 m5 m6 m7   m8 m9 m10 m11   m12 m13 m14 m15   m16 m17 m18 m19   m20 m21 m22 m23   m24 m25 m26 m27   m28 m29 m30 m31
+
+## Define to which layer each individual GEM module belongs to.
+sbs.gemFPP.m0.layer = 0
+sbs.gemFPP.m1.layer = 0
+sbs.gemFPP.m2.layer = 0
+sbs.gemFPP.m3.layer = 0
+
+sbs.gemFPP.m4.layer = 1
+sbs.gemFPP.m5.layer = 1
+sbs.gemFPP.m6.layer = 1
+sbs.gemFPP.m7.layer = 1
+
+sbs.gemFPP.m8.layer = 2
+sbs.gemFPP.m9.layer = 2
+sbs.gemFPP.m10.layer = 2
+sbs.gemFPP.m11.layer = 2
+
+sbs.gemFPP.m12.layer = 3
+sbs.gemFPP.m13.layer = 3
+sbs.gemFPP.m14.layer = 3
+sbs.gemFPP.m15.layer = 3
+
+sbs.gemFPP.m16.layer = 4
+sbs.gemFPP.m17.layer = 4
+sbs.gemFPP.m18.layer = 4
+sbs.gemFPP.m19.layer = 4
+
+sbs.gemFPP.m20.layer = 5
+sbs.gemFPP.m21.layer = 5
+sbs.gemFPP.m22.layer = 5
+sbs.gemFPP.m23.layer = 5
+
+sbs.gemFPP.m24.layer = 6
+sbs.gemFPP.m25.layer = 6
+sbs.gemFPP.m26.layer = 6
+sbs.gemFPP.m27.layer = 6
+
+sbs.gemFPP.m28.layer = 7
+sbs.gemFPP.m29.layer = 7
+sbs.gemFPP.m30.layer = 7
+sbs.gemFPP.m31.layer = 7
+
+# # Define initial guess values for GEM detector position and angle based on engineering drawings and tape measurements.
+# # Positions in internal GEM coordinate system.
+# ADR 6/4/2025 - new C foil internal alignment after the Hall work in 5/23/2025.
+sbs.gemFPP.m0.position =       -0.947472      -0.0062094         2.10029
+sbs.gemFPP.m0.angle =     -0.07712929      -0.5456145       0.1580418
+sbs.gemFPP.m1.position =      -0.4343362    -0.005667575        2.055099
+sbs.gemFPP.m1.angle =     -0.05761682      -0.4487412       0.1851701
+sbs.gemFPP.m2.position =      0.08124749    -0.002804976         2.08581
+sbs.gemFPP.m2.angle =      -0.1156144      -0.1396878       0.1044732
+sbs.gemFPP.m3.position =        0.592722     -0.00216742         2.04173
+sbs.gemFPP.m3.angle =      0.09192134        0.642068       0.2488894
+sbs.gemFPP.m4.position =      -0.9526675    -0.005215229        2.183575
+sbs.gemFPP.m4.angle =      -0.3187446       -1.026218       0.1162588
+sbs.gemFPP.m5.position =       -0.439034     -0.00426742         2.15231
+sbs.gemFPP.m5.angle =      -0.1009288       -0.676073        0.184085
+sbs.gemFPP.m6.position =       0.0766311     -0.00342602         2.17099
+sbs.gemFPP.m6.angle =      -0.1624845      -0.3644705       0.3985368
+sbs.gemFPP.m7.position =       0.5867767   -0.0005699556        2.140933
+sbs.gemFPP.m7.angle =      0.09228503       0.4412997       0.0728044
+sbs.gemFPP.m8.position =       -0.950004     -0.00544018         2.32323
+sbs.gemFPP.m8.angle =      -0.3089658       -1.027182      0.06900475
+sbs.gemFPP.m9.position =      -0.4370516    -0.004627475        2.297866
+sbs.gemFPP.m9.angle =      -0.3432858        -1.08894        0.115126
+sbs.gemFPP.m10.position =      0.07760178   -0.0008675861        2.314972
+sbs.gemFPP.m10.angle =      -0.1478396      -0.4348308       0.1606692
+sbs.gemFPP.m11.position =        0.589453    -0.000192188         2.29013
+sbs.gemFPP.m11.angle =       0.1473138       0.3734568      0.07835312
+sbs.gemFPP.m12.position =      -0.9498101    -0.004589592        2.409106
+sbs.gemFPP.m12.angle =      -0.3267155       -1.206321      0.03418331
+sbs.gemFPP.m13.position =       -0.438488     -0.00561032         2.37939
+sbs.gemFPP.m13.angle =      -0.4079076       -1.168994     -0.07207981
+sbs.gemFPP.m14.position =       0.0769501     -0.00141108         2.40649
+sbs.gemFPP.m14.angle =     -0.02093909        -0.74292       0.1153255
+sbs.gemFPP.m15.position =       0.5887099     -0.00116414        2.372235
+sbs.gemFPP.m15.angle =      0.01708633       0.1691413      0.08092961
+sbs.gemFPP.m16.position =       -0.949378      0.00244479         2.51025
+sbs.gemFPP.m16.angle =      -0.3977536      -0.9431229      -0.2295298
+sbs.gemFPP.m17.position =      -0.4395229   -0.0002336023        2.569288
+sbs.gemFPP.m17.angle =      -0.5070079      -0.9779042      -0.3524443
+sbs.gemFPP.m18.position =      0.07698534       0.0009935        2.499164
+sbs.gemFPP.m18.angle =     -0.05460214       -0.514088      -0.1251278
+sbs.gemFPP.m19.position =        0.589461     0.000188152         2.56937
+sbs.gemFPP.m19.angle =     -0.05714584       0.6177917      -0.2022518
+sbs.gemFPP.m20.position =      -0.9584184     0.003195015        2.604668
+sbs.gemFPP.m20.angle =      -0.2033779       -1.197195      -0.2560906
+sbs.gemFPP.m21.position =       -0.444899    -6.22883e-05         2.67221
+sbs.gemFPP.m21.angle =      -0.3270947       -1.016083      -0.4503597
+sbs.gemFPP.m22.position =       0.0688114     0.000216703         2.59997
+sbs.gemFPP.m22.angle =       0.1002401      -0.3843326       -0.157478
+sbs.gemFPP.m23.position =       0.5844402    -0.001163831        2.664581
+sbs.gemFPP.m23.angle =      0.09994093       0.8820886      -0.2749065
+sbs.gemFPP.m24.position =       -0.948466     -0.00753123         2.73827
+sbs.gemFPP.m24.angle =      -0.5021356       -1.120476      0.02081985
+sbs.gemFPP.m25.position =      -0.4373086    -0.008750333        2.805682
+sbs.gemFPP.m25.angle =      -0.4782733       -1.072658       -0.222463
+sbs.gemFPP.m26.position =      0.07852097    -0.005600027        2.731066
+sbs.gemFPP.m26.angle =      0.03274981       -0.699805       0.1494784
+sbs.gemFPP.m27.position =        0.591983     -0.00387536          2.8018
+sbs.gemFPP.m27.angle =      0.04516294       0.3612923    -0.008298033
+sbs.gemFPP.m28.position =      -0.9366402     -0.00495563        2.832939
+sbs.gemFPP.m28.angle =      -0.4120345       -1.232033      -0.1136656
+sbs.gemFPP.m29.position =       -0.425313     -0.00840696         2.90274
+sbs.gemFPP.m29.angle =      -0.5511888       -1.438846       -0.345014
+sbs.gemFPP.m30.position =        0.089858       -0.002673         2.82785
+sbs.gemFPP.m30.angle =       0.2194526      -0.6124747      0.05246798
+sbs.gemFPP.m31.position =       0.6040633    -0.003341951        2.903051
+sbs.gemFPP.m31.angle =      0.03552001       0.5975283      -0.1467598
+
+
+# Define module sizes. Set to nominal sizes.
+sbs.gemFPP.m0.size = 0.512 0.6144 0.001
+sbs.gemFPP.m1.size = 0.512 0.6144 0.001
+sbs.gemFPP.m2.size = 0.512 0.6144 0.001
+sbs.gemFPP.m3.size = 0.512 0.6144 0.001
+
+sbs.gemFPP.m4.size = 0.512 0.6144 0.001
+sbs.gemFPP.m5.size = 0.512 0.6144 0.001
+sbs.gemFPP.m6.size = 0.512 0.6144 0.001
+sbs.gemFPP.m7.size = 0.512 0.6144 0.001
+
+sbs.gemFPP.m8.size = 0.512 0.6144 0.001
+sbs.gemFPP.m9.size = 0.512 0.6144 0.001
+sbs.gemFPP.m10.size = 0.512 0.6144 0.001
+sbs.gemFPP.m11.size = 0.512 0.6144 0.001
+
+sbs.gemFPP.m12.size = 0.512 0.6144 0.001
+sbs.gemFPP.m13.size = 0.512 0.6144 0.001
+sbs.gemFPP.m14.size = 0.512 0.6144 0.001
+sbs.gemFPP.m15.size = 0.512 0.6144 0.001
+
+sbs.gemFPP.m16.size = 0.512 0.6144 0.001
+sbs.gemFPP.m17.size = 0.512 0.6144 0.001
+sbs.gemFPP.m18.size = 0.512 0.6144 0.001
+sbs.gemFPP.m19.size = 0.512 0.6144 0.001
+
+sbs.gemFPP.m20.size = 0.512 0.6144 0.001
+sbs.gemFPP.m21.size = 0.512 0.6144 0.001
+sbs.gemFPP.m22.size = 0.512 0.6144 0.001
+sbs.gemFPP.m23.size = 0.512 0.6144 0.001
+
+sbs.gemFPP.m24.size = 0.512 0.6144 0.001
+sbs.gemFPP.m25.size = 0.512 0.6144 0.001
+sbs.gemFPP.m26.size = 0.512 0.6144 0.001
+sbs.gemFPP.m27.size = 0.512 0.6144 0.001
+
+sbs.gemFPP.m28.size = 0.512 0.6144 0.001
+sbs.gemFPP.m29.size = 0.512 0.6144 0.001
+sbs.gemFPP.m30.size = 0.512 0.6144 0.001
+sbs.gemFPP.m31.size = 0.512 0.6144 0.001
+
+
+
