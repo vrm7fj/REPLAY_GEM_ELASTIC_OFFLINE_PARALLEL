@@ -774,18 +774,26 @@ void project_track_to_layer(TTree* T) {
 
     for ( Int_t ilayer = 0; ilayer < TKR_NLAYER; ilayer++ ) {
 
-      if ( ilayer == 0 ) {
-	// no need to project track if its layer 0
-	track_list_para.layer_on_track.push_back(ilayer);
-	track_list_para.track_pos_on_layer.push_back(TVector2(track_x, track_y));
-      } else {
+      // if ( ilayer == 0 ) {
+      // 	// no need to project track if its layer 0
+      // 	track_list_para.layer_on_track.push_back(ilayer);
+      // 	track_list_para.track_pos_on_layer.push_back(TVector2(track_x, track_y));
+      // } else {
+      // 	// We have to project the track now. We will use the average z position of the layer.
+      // 	Double_t x_project = fZavgLayer[ilayer] * track_xp + track_x;
+      // 	Double_t y_project = fZavgLayer[ilayer] * track_yp + track_y;
+         
+      // 	track_list_para.layer_on_track.push_back(ilayer);
+      // 	track_list_para.track_pos_on_layer.push_back(TVector2(x_project, y_project));
+      // }
+     
 	// We have to project the track now. We will use the average z position of the layer.
 	Double_t x_project = fZavgLayer[ilayer] * track_xp + track_x;
 	Double_t y_project = fZavgLayer[ilayer] * track_yp + track_y;
          
 	track_list_para.layer_on_track.push_back(ilayer);
 	track_list_para.track_pos_on_layer.push_back(TVector2(x_project, y_project));
-      }
+      
     }
 
     // Add this entry to the track_list
@@ -954,12 +962,56 @@ void CalcEfficiency() {
 
     // Efficiency = didhit/shouldhit
 
-    Double_t elastic_efficiency = (( (TH1D*) (*hdidhit_xy_layer)[ilayer] )->GetEntries() / ( (TH1D*) (*hshouldhit_xy_layer)[ilayer] )->GetEntries()) * 100;
+    //Double_t elastic_efficiency = (( (TH1D*) (*hdidhit_xy_layer)[ilayer] )->GetEntries() / ( (TH1D*) (*hshouldhit_xy_layer)[ilayer] )->GetEntries()) * 100;
+
+     Double_t efnum = ( (TH1D*) (*hdidhit_xy_layer)[ilayer] )->Integral();
+     Double_t efden = ( (TH1D*) (*hshouldhit_xy_layer)[ilayer] )->Integral();
+     Double_t elastic_efficiency = ( efden > 0? (efnum / efden) * 100.0 : 0.0);
 
     layer_elastic_efficiency.push_back(elastic_efficiency);
 
     std::cout << " Layer " << ilayer << " efficiency = " << elastic_efficiency << std::endl;
   }
+
+  // Set bin values to 0 if they exceed 1
+
+  for (Int_t ilayer = 0; ilayer < TKR_NLAYER; ilayer++) {
+
+    TH1D* h_eff_x = (TH1D*) (*hefficiency_x_layer)[ilayer];
+    TH1D* h_eff_y = (TH1D*) (*hefficiency_y_layer)[ilayer];
+    TH2D* h_eff_xy = (TH2D*) (*hefficiency_xy_layer)[ilayer];
+
+    // for X efficiency
+    for (Int_t ix = 1; ix < h_eff_x->GetNbinsX(); ix++) {
+      Double_t eff_val = h_eff_x->GetBinContent(ix);
+      if (eff_val > 1) {
+	h_eff_x->SetBinContent(ix, 0.0);
+	h_eff_x->SetBinError(ix,0.0);
+      }
+    }
+
+    // for Y efficiency
+    for (Int_t iy = 1; iy < h_eff_y->GetNbinsX(); iy++) {
+      Double_t eff_val = h_eff_y->GetBinContent(iy);
+      if (eff_val > 1) {
+	h_eff_y->SetBinContent(iy, 0.0);
+	h_eff_y->SetBinError(iy,0.0);
+      }
+    }
+
+    // for XY efficiency
+    for (Int_t ix = 1; ix < h_eff_xy->GetNbinsX(); ix++) {
+      for (Int_t iy = 1; iy < h_eff_xy->GetNbinsY(); iy++) {
+        Double_t eff_val = h_eff_xy->GetBinContent(ix, iy);
+        if (eff_val > 1) {
+	  h_eff_xy->SetBinContent(ix, iy, 0.0);
+	  h_eff_xy->SetBinError(ix, iy, 0.0);
+        }
+      }
+    }
+    
+  }
+  
 }
 
 /**************************************************************
@@ -977,7 +1029,7 @@ void Draw_Histograms() {
 
   c->Print(outpdfname + "[");
 
-  gStyle->SetPalette(kDarkBodyRadiator);
+  gStyle->SetPalette(kViridis);
 
   Int_t one_time_hist = 1;
 
